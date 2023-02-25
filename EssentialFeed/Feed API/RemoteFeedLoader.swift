@@ -1,10 +1,3 @@
-//
-//  RemoteFeedLoader.swift
-//  EssentialFeed
-//
-//  Created by Thu Do on 18/02/2023.
-//
-
 import Foundation
 
 public enum HTTPClientResult {
@@ -14,7 +7,6 @@ public enum HTTPClientResult {
 
 public protocol HTTPClient {
     func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void)
-    
 }
 
 public final class RemoteFeedLoader {
@@ -40,8 +32,8 @@ public final class RemoteFeedLoader {
         client.get(from: url) { result in
             switch result {
             case let .success(data, _):
-                if let _ = try? JSONSerialization.jsonObject(with: data) {
-                    completion(.success([]))
+                if let root = try? JSONDecoder().decode(Root.self, from: data) {
+                    completion(.success(root.items))
                 } else {
                     completion(.failure(.invalidData))
                 }
@@ -52,3 +44,6 @@ public final class RemoteFeedLoader {
     }
 }
 
+private struct Root: Decodable {
+    let items: [FeedItem]
+}
