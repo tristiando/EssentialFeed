@@ -11,7 +11,7 @@ public final class LocalFeedLoader {
     private let store: FeedStore
     private let currentDate: () -> Date
     private let calendar = Calendar(identifier: .gregorian)
-
+    
     public typealias SaveResult = Error?
     public typealias LoadResult = LoadFeedResult
     
@@ -42,7 +42,6 @@ public final class LocalFeedLoader {
             case let .found(feed, timestamp) where self.validate(timestamp):
                 completion(.success(feed.toModels()))
             case .found:
-                self.store.deleteCachedFeed { _ in }
                 completion(.success([]))
             case.empty:
                 completion(.success([]))
@@ -55,7 +54,9 @@ public final class LocalFeedLoader {
             switch result {
             case .failure:
                 self.store.deleteCachedFeed { _ in }
-            default: break
+            case let .found(_, timestamp) where !self.validate(timestamp):
+                self.store.deleteCachedFeed { _ in }
+            case .empty, .found: break
             }
         }
         
