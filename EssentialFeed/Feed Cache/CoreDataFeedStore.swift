@@ -22,6 +22,7 @@ public final class CoreDataFeedStore: FeedStore {
         context.perform {
             do {
                 let request = NSFetchRequest<ManagedCache>(entityName: ManagedCache.entity().name!)
+                request.returnsObjectsAsFaults = false
                 if let cache = try context.fetch(request).first {
                     completion(.found(
                         feed: cache.localFeed,
