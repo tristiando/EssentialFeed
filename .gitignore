@@ -1,0 +1,4 @@
+# Xcode build files
+build/
+DerivedData/
+xcuserdata/
