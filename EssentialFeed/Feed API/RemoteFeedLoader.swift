@@ -21,7 +21,7 @@ public final class RemoteFeedLoader: FeedLoader {
             guard self != nil else { return } // this is to avoid static func "map" being called even when RemoteFeedLoader object has been deallocated.
             
             switch result {
-            case let .success(data, response):
+            case let .success((data, response)):
                 completion(RemoteFeedLoader.map(data, from: response))
             case .failure:
                 completion(.failure(Error.connectivity))
