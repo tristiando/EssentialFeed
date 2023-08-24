@@ -5,17 +5,20 @@
 //  Created by Thu Do on 24/08/2023.
 //
 
-import UIKit
 import EssentialFeed
 
-final class FeedImageViewModel {
+final class FeedImageViewModel<Image> {
+    typealias Observer<T> = (T) -> Void
+    
     private var task: FeedImageDataLoaderTask?
     private let model: FeedImage
     private let imageLoader: FeedImageDataLoader
+    private let imageTransformer: (Data) -> Image?
     
-    init(model: FeedImage, imageLoader: FeedImageDataLoader) {
+    init(model: FeedImage, imageLoader: FeedImageDataLoader, imageTransformer: @escaping (Data) -> Image?) {
         self.model = model
         self.imageLoader = imageLoader
+        self.imageTransformer = imageTransformer
     }
     
     var location: String? {
@@ -30,22 +33,26 @@ final class FeedImageViewModel {
         return model.description
     }
     
-    var onImageLoad: ((UIImage) -> Void)?
-    var onImageLoadingStateChange: ((Bool) -> Void)?
-    var onShouldRetryImageLoadStateChange: ((Bool) -> Void)?
+    var onImageLoad: Observer<Image>?
+    var onImageLoadingStateChange: Observer<Bool>?
+    var onShouldRetryImageLoadStateChange: Observer<Bool>?
     
     func loadImageData() {
         onImageLoadingStateChange?(true)
         onShouldRetryImageLoadStateChange?(false)
         task = imageLoader.loadImageData(from: model.url) { [weak self] result in
-            let data = try? result.get()
-            if let image = data.flatMap(UIImage.init) {
-                self?.onImageLoad?(image)
-            } else {
-                self?.onShouldRetryImageLoadStateChange?(true)
-            }
-            self?.onImageLoadingStateChange?(false)
+            self?.handle(result)
         }
+    }
+    
+    private func handle(_ result: FeedImageDataLoader.Result) {
+        let data = try? result.get()
+        if let image = data.flatMap(imageTransformer) {
+            onImageLoad?(image)
+        } else {
+            onShouldRetryImageLoadStateChange?(true)
+        }
+        onImageLoadingStateChange?(false)
     }
     
     func cancelImageDataLoad() {
@@ -53,4 +60,6 @@ final class FeedImageViewModel {
         task = nil
     }
 }
+
+
 
